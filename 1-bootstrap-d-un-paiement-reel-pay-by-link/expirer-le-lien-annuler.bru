@@ -1,0 +1,22 @@
+meta {
+  name: Expirer le lien (annuler)
+  type: http
+  seq: 4
+}
+post {
+  url: {{base_url}}/api/public/v1/payment-links/{{paymentLinkId}}/expire?publicStoreId={{publicStoreId}}
+  body: none
+  auth: bearer
+}
+headers {
+  Idempotency-Key: {{idemKey}}
+}
+auth:bearer {
+  token: {{access_token}}
+}
+script:post-response {
+  test('Reponse acceptee (2xx)', function () {
+    expect([200,201,202,204]).to.include(res.getStatus());
+  });
+  try { var b = res.getBody(); if (b && b.status) console.log('status:', b.status); } catch (e) {}
+}

@@ -1,0 +1,10 @@
+{
+  "version": "1",
+  "name": "testKit Public Transaction Service",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git",
+    ".env"
+  ]
+}

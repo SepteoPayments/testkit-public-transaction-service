@@ -1,0 +1,17 @@
+meta {
+  name: Vérifier l'accès — Ping
+  type: http
+  seq: 2
+}
+get {
+  url: {{base_url}}/api/public/v1/ping
+  body: none
+  auth: bearer
+}
+auth:bearer {
+  token: {{access_token}}
+}
+script:post-response {
+  test('Ping OK (200)', function () { expect(res.getStatus()).to.equal(200); });
+  test('Reponse Pong', function () { expect(String(res.getBody())).to.include('Pong'); });
+}

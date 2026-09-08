@@ -1,0 +1,9 @@
+# secrets — jamais committes
+.env
+*.pem
+
+# outillage
+node_modules/
+
+# bruno local
+.bruno/

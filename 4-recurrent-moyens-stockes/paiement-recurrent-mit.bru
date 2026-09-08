@@ -1,0 +1,33 @@
+meta {
+  name: Paiement récurrent (MIT)
+  type: http
+  seq: 1
+}
+post {
+  url: {{base_url}}/api/public/v1/payments
+  body: json
+  auth: bearer
+}
+headers {
+  Content-Type: application/json
+  Idempotency-Key: {{idemKey}}
+}
+auth:bearer {
+  token: {{access_token}}
+}
+body:json {
+  {
+    "amount": { "value": {{amount_value}}, "currency": "{{currency}}" },
+    "publicStoreId": "{{publicStoreId}}",
+    "token": "REMPLACER_PAR_UN_TOKEN_STOCKE",
+    "shopperReference": "{{shopperReference}}",
+    "recurringModel": "UNSCHEDULED",
+    "reference": "test-mit-001"
+  }
+}
+script:post-response {
+  test('Reponse acceptee (2xx)', function () {
+    expect([200,201,202,204]).to.include(res.getStatus());
+  });
+  try { var b = res.getBody(); if (b && b.status) console.log('status:', b.status); } catch (e) {}
+}

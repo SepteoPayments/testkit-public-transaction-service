@@ -1,0 +1,19 @@
+meta {
+  name: Consulter le lien
+  type: http
+  seq: 2
+}
+get {
+  url: {{base_url}}/api/public/v1/payment-links/{{paymentLinkId}}?publicStoreId={{publicStoreId}}
+  body: none
+  auth: bearer
+}
+auth:bearer {
+  token: {{access_token}}
+}
+script:post-response {
+  test('Reponse acceptee (2xx)', function () {
+    expect([200,201,202,204]).to.include(res.getStatus());
+  });
+  try { var b = res.getBody(); if (b && b.status) console.log('status:', b.status); } catch (e) {}
+}

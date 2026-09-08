@@ -1,0 +1,30 @@
+meta {
+  name: Prolonger la validité (#2740)
+  type: http
+  seq: 4
+}
+post {
+  url: {{base_url}}/api/public/v1/payments/{{pspReference}}/extend
+  body: json
+  auth: bearer
+}
+headers {
+  Content-Type: application/json
+  Idempotency-Key: {{idemKey}}
+}
+auth:bearer {
+  token: {{access_token}}
+}
+body:json {
+  {
+    "amount": { "value": {{amount_value}}, "currency": "{{currency}}" },
+    "publicStoreId": "{{publicStoreId}}",
+    "reason": "DELAYED_CHARGE"
+  }
+}
+script:post-response {
+  test('Reponse acceptee (2xx)', function () {
+    expect([200,201,202,204]).to.include(res.getStatus());
+  });
+  try { var b = res.getBody(); if (b && b.status) console.log('status:', b.status); } catch (e) {}
+}

@@ -1,0 +1,32 @@
+meta {
+  name: Créer un lien de paiement
+  type: http
+  seq: 1
+}
+post {
+  url: {{base_url}}/api/public/v1/payment-links
+  body: json
+  auth: bearer
+}
+headers {
+  Content-Type: application/json
+  Idempotency-Key: {{idemKey}}
+}
+auth:bearer {
+  token: {{access_token}}
+}
+body:json {
+  {
+    "amount": { "value": {{amount_value}}, "currency": "{{currency}}" },
+    "reference": "test-link-001",
+    "returnUrl": "https://exemple.fr/retour",
+    "publicStoreId": "{{publicStoreId}}",
+    "description": "Test lien de paiement"
+  }
+}
+script:post-response {
+  test('Lien cree (201)', function () { expect(res.getStatus()).to.equal(201); });
+  var b = res.getBody();
+  if (b && b.id) bru.setVar('paymentLinkId', b.id);
+  if (b && b.url) console.log('Ouvre ce lien et paie avec une carte de test :', b.url);
+}

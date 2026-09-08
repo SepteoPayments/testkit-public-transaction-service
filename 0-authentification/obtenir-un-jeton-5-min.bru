@@ -1,0 +1,46 @@
+meta {
+  name: Obtenir un jeton (5 min)
+  type: http
+  seq: 1
+}
+post {
+  url: {{token_url}}
+  body: formUrlEncoded
+  auth: none
+}
+headers {
+  Content-Type: application/x-www-form-urlencoded
+}
+body:form-urlencoded {
+  grant_type: client_credentials
+  client_assertion_type: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+  client_assertion: {{client_assertion}}
+  scope: {{scopes}}
+  audience: {{token_audience}}
+}
+script:pre-request {
+  // Signe l'assertion private_key_jwt avec le crypto natif de Node (Developer Mode requis).
+  // La cle privee reste hors git : elle vient de .env (PRIVATE_KEY_PEM).
+  const crypto = require('crypto');
+  const clientId = bru.getEnvVar('client_id');
+  const kid = bru.getEnvVar('kid');
+  const aud = bru.getEnvVar('aud');
+  let pem = bru.getProcessEnv('PRIVATE_KEY_PEM') || bru.getEnvVar('private_key_pem') || '';
+  if (pem.indexOf('\\n') >= 0) pem = pem.replace(/\\n/g, '\n');
+  if (!clientId) throw new Error('client_id manquant (environnement).');
+  if (!kid) throw new Error('kid manquant (environnement).');
+  if (!pem || pem.indexOf('BEGIN') < 0) throw new Error('Cle privee absente : mets PRIVATE_KEY_PEM dans .env');
+  const b64url = (o) => Buffer.from(typeof o === 'string' ? o : JSON.stringify(o)).toString('base64url');
+  const now = Math.floor(Date.now() / 1000);
+  const header = { alg: 'RS256', typ: 'JWT', kid: kid };
+  const payload = { iss: clientId, sub: clientId, aud: aud, jti: 'jti-' + now + '-' + Math.random().toString(36).slice(2), iat: now - 60, nbf: now - 60, exp: now + 300 };
+  const signingInput = b64url(header) + '.' + b64url(payload);
+  const signature = crypto.createSign('RSA-SHA256').update(signingInput).sign(pem).toString('base64url');
+  bru.setVar('client_assertion', signingInput + '.' + signature);
+}
+script:post-response {
+  test('Jeton obtenu (200)', function () { expect(res.getStatus()).to.equal(200); });
+  var b = res.getBody();
+  if (b && b.access_token) { bru.setVar('access_token', b.access_token); console.log('access_token stocke.'); }
+  else { console.log('Reponse token :', JSON.stringify(b)); }
+}

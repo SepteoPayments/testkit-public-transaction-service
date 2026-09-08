@@ -1,0 +1,7 @@
+script:pre-request {
+  // Idempotency-Key fraiche pour chaque requete (utilisee par les POST via {{idemKey}}).
+  var uuid = (globalThis.crypto && globalThis.crypto.randomUUID)
+    ? globalThis.crypto.randomUUID()
+    : require('crypto').randomUUID();
+  bru.setVar('idemKey', uuid);
+}

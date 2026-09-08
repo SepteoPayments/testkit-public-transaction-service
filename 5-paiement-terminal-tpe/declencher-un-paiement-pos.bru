@@ -1,0 +1,30 @@
+meta {
+  name: Déclencher un paiement POS
+  type: http
+  seq: 2
+}
+post {
+  url: {{base_url}}/api/public/v1/payments/pos
+  body: json
+  auth: bearer
+}
+headers {
+  Content-Type: application/json
+  Idempotency-Key: {{idemKey}}
+}
+auth:bearer {
+  token: {{access_token}}
+}
+body:json {
+  {
+    "amount": { "value": {{amount_value}}, "currency": "{{currency}}" },
+    "deviceId": "{{deviceId}}",
+    "saleReference": "test-pos-001",
+    "publicStoreId": "{{publicStoreId}}"
+  }
+}
+script:post-response {
+  test('Accepte (202)', function () { expect(res.getStatus()).to.equal(202); });
+  var b = res.getBody();
+  if (b && b.serviceId) bru.setVar('serviceId', b.serviceId);
+}
