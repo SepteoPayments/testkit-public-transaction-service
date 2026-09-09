@@ -1,0 +1,35 @@
+meta {
+  name: Annuler un order (ANCV + CB)
+  type: http
+  seq: 1
+}
+post {
+  url: {{base_url}}/api/public/v1/orders/{{orderPspReference}}/reversals
+  body: json
+  auth: bearer
+}
+headers {
+  Content-Type: application/json
+  Idempotency-Key: {{idemKey}}
+}
+auth:bearer {
+  token: {{access_token}}
+}
+body:json {
+  {
+    "publicStoreId": "{{publicStoreId}}"
+  }
+}
+docs {
+  Annule un order composite (ex. ANCV + carte) en inversant chaque jambe.
+  L'orderPspReference vient du webhook ORDER_CLOSED (colle-le dans l'env).
+  Réponse par jambe : status global RECEIVED / PARTIAL / FAILED ; chaque jambe
+  outcome RECEIVED / REFUSED / UNAVAILABLE. La jambe ANCV n'est reversable que
+  dans les 4h après capture. Rejouable avec la même Idempotency-Key.
+}
+script:post-response {
+  test('Order traité (200)', function () { expect(res.getStatus()).to.equal(200); });
+  var b = res.getBody();
+  if (b && b.status) console.log('status order:', b.status);
+  if (b && b.legs) b.legs.forEach(function (l) { console.log('  jambe', l.paymentMethod, '->', l.outcome, l.reason || ''); });
+}
