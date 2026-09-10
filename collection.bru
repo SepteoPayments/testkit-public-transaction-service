@@ -1,12 +1,21 @@
 script:pre-request {
-  // Idempotency-Key unique par requete (utilisee par les POST via {{idemKey}}).
-  // SANS crypto : marche en Safe Mode (QuickJS) ET en Developer Mode. Un UUID v4 en Math.random
-  // suffit largement ici (unicite, pas de besoin cryptographique).
+  // Cle d'idempotence attachee a l'OPERATION metier, pas a la tentative HTTP.
+  // On la derive de la `reference` du paiement (deterministe) : un rejeu avec la MEME
+  // reference reutilise la MEME cle, comme un vrai PMS => l'API renvoie le resultat
+  // d'origine au lieu de creer un doublon. Nouveau paiement = nouvelle reference.
+  // Pas de reference (GET, token) => UUID aleatoire, sans importance.
+  // SANS crypto : marche en Safe Mode (QuickJS) ET en Developer Mode.
   function uuid() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
       var r = Math.random() * 16 | 0;
       return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
     });
   }
-  bru.setVar('idemKey', uuid());
+  var ref = null;
+  try {
+    var body = req.getBody();
+    if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = null; } }
+    if (body && body.reference) ref = String(body.reference);
+  } catch (e) { ref = null; }
+  bru.setVar('idemKey', ref ? ('idem-' + ref) : uuid());
 }
