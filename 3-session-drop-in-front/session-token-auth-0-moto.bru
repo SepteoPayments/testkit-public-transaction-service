@@ -1,0 +1,47 @@
+meta {
+  name: Session — Token via auth à 0 (MOTO)
+  type: http
+  seq: 7
+}
+post {
+  url: {{base_url}}/api/public/v1/sessions
+  body: json
+  auth: bearer
+}
+headers {
+  Content-Type: application/json
+  Idempotency-Key: {{idemKey}}
+}
+auth:bearer {
+  token: {{access_token}}
+}
+body:json {
+  {
+    "amount": { "value": 0, "currency": "{{currency}}" },
+    "reference": "test-session-token-auth0-moto",
+    "publicStoreId": "{{publicStoreId}}",
+    "returnUrl": "https://exemple.fr/retour",
+    "shopperCountryCode": "FR",
+    "capture": { "mode": "IMMEDIATE" },
+    "tokenization": { "shopperReference": "{{shopperReference}}", "recurringModel": "UNSCHEDULED", "consentMode": "{{consentMode}}" },
+    "moto": true,
+    "preAuth": false
+  }
+}
+docs {
+  Auth à 0 + tokenisation, saisie par un agent (MOTO). Rien n'est débité : ça valide et
+  ENREGISTRE le moyen de paiement pour des débits futurs à l'initiative du marchand.
+  Ensuite : le token arrive dans le webhook AUTHORISATION (storedPaymentMethodId), puis on
+  débite le montant voulu via « Récurrent & moyens stockés / Paiement récurrent (MIT) »
+  (POST /payments, shopperInteraction=ContAuth) avec le MÊME shopperReference et recurringModel=UNSCHEDULED.
+}
+script:post-response {
+  test('200 CREATED', function () { expect(res.getStatus()).to.equal(200); });
+  var b = res.getBody();
+  if (b && b.clientSession) {
+    bru.setVar('clientSession', b.clientSession);
+    if (b.publicSessionId) bru.setVar('publicSessionId', b.publicSessionId);
+    console.log('--- clientSession (colle-le dans dropin-test.html) ---');
+    console.log(b.clientSession);
+  } else { console.log('Pas de clientSession :', JSON.stringify(b)); }
+}
