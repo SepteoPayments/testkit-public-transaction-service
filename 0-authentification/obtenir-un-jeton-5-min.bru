@@ -21,7 +21,11 @@ body:form-urlencoded {
 script:pre-request {
   // Signe l'assertion private_key_jwt avec le crypto natif de Node (Developer Mode requis).
   // La cle privee reste hors git : elle vient de .env (PRIVATE_KEY_PEM).
-  const crypto = require('crypto');
+  var crypto;
+  try { crypto = require('crypto'); } catch (e) { crypto = null; }
+  if (!crypto || !crypto.createSign) {
+    throw new Error("Active le Developer Mode de Bruno (Collection settings > Safe Mode > Developer Mode) : la signature du token (RS256) a besoin du module crypto de Node, indisponible en Safe Mode.");
+  }
   const clientId = bru.getEnvVar('client_id');
   const kid = bru.getEnvVar('kid');
   const aud = bru.getEnvVar('aud');

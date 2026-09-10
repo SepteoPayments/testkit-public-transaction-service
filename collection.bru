@@ -1,7 +1,12 @@
 script:pre-request {
-  // Idempotency-Key fraiche pour chaque requete (utilisee par les POST via {{idemKey}}).
-  var uuid = (globalThis.crypto && globalThis.crypto.randomUUID)
-    ? globalThis.crypto.randomUUID()
-    : require('crypto').randomUUID();
-  bru.setVar('idemKey', uuid);
+  // Idempotency-Key unique par requete (utilisee par les POST via {{idemKey}}).
+  // SANS crypto : marche en Safe Mode (QuickJS) ET en Developer Mode. Un UUID v4 en Math.random
+  // suffit largement ici (unicite, pas de besoin cryptographique).
+  function uuid() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+  }
+  bru.setVar('idemKey', uuid());
 }
