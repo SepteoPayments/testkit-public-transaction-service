@@ -11,8 +11,13 @@ Versionnée dans git : chaque requête = un fichier `.bru` lisible et diffable e
 ## Démarrage (clé en main)
 
 1. **Cloner** ce repo et l'ouvrir dans Bruno : *Open Collection* → ce dossier.
-2. **Secrets** : copier `.env.example` en `.env`, y coller la clé privée sandbox dans `PRIVATE_KEY_PEM`.
-   Le `.env` est gitignoré, il ne part jamais.
+2. **Secret — la clé privée** : à la racine du repo, copie **`.env.example`** en **`.env`** (gitignoré, il ne part jamais)
+   et mets-y la clé privée sandbox dans la variable `PRIVATE_KEY_PEM` :
+   ```
+   PRIVATE_KEY_PEM="-----BEGIN PRIVATE KEY-----\n…colle la clé ici…\n-----END PRIVATE KEY-----\n"
+   ```
+   PEM en une ligne avec des `\n` littéraux, **ou** en multiligne entre guillemets — le script gère les deux.
+   La clé de test se demande à l'équipe (voir « La clé » plus bas).
 3. **Developer Mode** : dans Bruno, *Collection settings → Safe Mode → Developer Mode*.
    C'est nécessaire pour que le script du jeton puisse signer avec `crypto` de Node.
 4. Choisir l'environnement **Sandbox-Marc-Spa** (menu en haut à droite).
@@ -48,6 +53,15 @@ Aucune clé n'est envoyée en clair, aucune n'est committée.
 C'est du git normal : `git pull` pour te mettre à jour, une **branche** + **commit** + **Pull Request**
 pour proposer une modif. Les diffs `.bru` se relisent comme du code. Rien ne dépend d'un cloud tiers.
 
+## La clé : calibrée sur un main-customer
+
+Le trio **clé privée + `client_id` + `kid`** (le `client_id` et le `kid` sont dans l'environnement) identifie **un** main-customer — ici le client de test **Marc Resort Group 2**. Cette clé autorise **tout le périmètre de ce main-customer** :
+
+- ✅ tu peux changer `publicStoreId` (dans l'environnement `Sandbox-Marc-Spa.bru`) pour **n'importe quelle boutique de CE main-customer** → ça marche.
+- ❌ elle **ne marche pas** pour une boutique d'un **autre** main-customer → refus (cloisonnement fail-closed, 403/404). Il faudrait la clé (client_id/kid + clé privée) **de cet autre main-customer**.
+
+Autrement dit : une clé = un main-customer, tous ses stores ; jamais les stores d'un autre.
+
 ## Secrets — à ne jamais committer
 
-`.env` (clé privée) et tout `*.pem` sont gitignorés. Ne les force jamais dans un commit.
+`.env` (clé privée) et tout `*.pem` sont gitignorés. Ne les force jamais dans un commit. La clé de test se distribue par un **canal sûr** (jamais dans git, ni par mail public).
