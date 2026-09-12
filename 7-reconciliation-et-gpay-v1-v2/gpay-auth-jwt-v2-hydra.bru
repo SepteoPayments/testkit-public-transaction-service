@@ -1,0 +1,60 @@
+meta {
+  name: Google Pay auth-JWT v2 (Hydra)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/api/public/v2/gpay/auth-jwt
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "merchantOrigin": "{{merchantOrigin}}"
+  }
+}
+
+script:post-response {
+  test('Assertion Google Pay v2 signée (200)', function () { expect(res.getStatus()).to.equal(200); });
+  var b = res.getBody();
+  if (b && b.authJwt) {
+    console.log('merchantOrigin :', b.merchantOrigin);
+    console.log('authJwt (tronqué) :', String(b.authJwt).slice(0, 60) + '...');
+  } else {
+    console.log('Réponse gpay v2 :', JSON.stringify(b));
+  }
+}
+
+docs {
+  # Google Pay auth-JWT v2 — la cible
+
+  `POST /api/public/v2/gpay/auth-jwt` — authentifié par **ORY Hydra**, scope `payments:write`.
+  Lance d'abord « 0 · Authentification > Obtenir un jeton (5 min) ».
+
+  Contrat de requête et de réponse strictement identique à la v1. Seule l'authentification
+  change, et donc la maille de l'identité : main-customer côté Hydra, société côté SSO.
+
+  Le contrôle de propriété du domaine (#2722) est ici natif : le registre
+  `main_customer_domain` est indexé par main-customer, qui est exactement l'identité portée
+  par le jeton.
+
+  ## Comparer les deux versions
+
+  Avec le même `merchantOrigin`, les deux requêtes doivent rendre le même code. Si la v1
+  passe et la v2 refuse, c'est que la société du jeton SSO et le main-customer du jeton
+  Hydra ne sont pas rattachés au même domaine : vérifie la page « Domaines à autoriser »
+  avant de conclure à une régression.
+
+  L'assertion renvoyée est identique dans les deux cas : mêmes claims, même clé de
+  signature, celle de la plateforme.
+}

@@ -1,0 +1,63 @@
+meta {
+  name: Obtenir un jeton SSO (legacy Keycloak)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{sso_token_url}}
+  body: formUrlEncoded
+  auth: none
+}
+
+headers {
+  Content-Type: application/x-www-form-urlencoded
+}
+
+body:form-urlencoded {
+  grant_type: client_credentials
+  client_id: {{sso_client_id}}
+  client_secret: {{process.env.SSO_CLIENT_SECRET}}
+}
+
+script:post-response {
+  test('Jeton SSO obtenu (200)', function () { expect(res.getStatus()).to.equal(200); });
+  var b = res.getBody();
+  if (b && b.access_token) {
+    bru.setVar('sso_access_token', b.access_token);
+    console.log('sso_access_token stocke. TTL =', b.expires_in, 's');
+  } else {
+    console.log('Reponse token SSO :', JSON.stringify(b));
+  }
+}
+
+docs {
+  # Jeton de l'IdP historique (SSO Septeo / Keycloak)
+
+  Les deux endpoints v1 (`idp: legacy` dans la gateway) sont authentifiés par ce jeton,
+  pas par celui d'ORY Hydra. Il faut donc lancer cette requête avant les requêtes v1,
+  exactement comme « Obtenir un jeton (5 min) » précède les requêtes v2.
+
+  ## Où trouver les identifiants
+
+  Dans le back-office, onglet **API Key public** d'un store :
+  - **SSO Application Id** → c'est le `client_id`, et c'est aussi le `publicSocietyId`
+    de la société (le back le renvoie depuis `society.getPublicSocietyId()`).
+  - **SSO Application secret** → le bouton œil le révèle.
+
+  Le secret ne va PAS dans l'environnement : mets-le dans le `.env` de la collection,
+  à côté de `PRIVATE_KEY_PEM` :
+
+  ```
+  SSO_CLIENT_SECRET=...
+  ```
+
+  ## Ce que contient le jeton
+
+  Contrairement au jeton Hydra, il ne porte aucun scope métier (`openid email profile`)
+  et son audience est celle de Keycloak (`account`). Son identité d'appelant est le
+  claim `client_id`, égal au `publicSocietyId`. C'est ce qui explique que les endpoints
+  v1 soient cloisonnés par société là où la v2 l'est par main-customer.
+
+  Attention : son TTL est de 3 heures, bien plus long que celui d'Hydra.
+}

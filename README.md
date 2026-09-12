@@ -18,6 +18,11 @@ Versionnée dans git : chaque requête = un fichier `.bru` lisible et diffable e
    ```
    PEM en une ligne avec des `\n` littéraux, **ou** en multiligne entre guillemets — le script gère les deux.
    La clé de test se demande à l'équipe (voir « La clé » plus bas).
+2bis. **Secret — le client SSO legacy** (seulement pour le dossier `7 · Réconciliation & Google Pay`) :
+   dans le même `.env`, ajoute `SSO_CLIENT_SECRET`. Il se lit dans le back-office, onglet
+   **API Key public** d'un store, champ *SSO Application secret*. Le `client_id` associé est le
+   champ *SSO Application Id* juste au-dessus, déjà renseigné dans l'environnement sous
+   `sso_client_id`. Sans ce secret, seuls les endpoints v2 (Hydra) sont jouables.
 3. **Developer Mode** : dans Bruno, *Collection settings → Safe Mode → Developer Mode*.
    C'est nécessaire pour que le script du jeton puisse signer avec `crypto` de Node.
 4. Choisir l'environnement **Sandbox-Marc-Spa** (menu en haut à droite).

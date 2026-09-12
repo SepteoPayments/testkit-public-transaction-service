@@ -1,0 +1,70 @@
+meta {
+  name: Google Pay auth-JWT v1 (SSO, dépréciée)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/api/public/v1/gpay/auth-jwt
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{sso_access_token}}
+}
+
+body:json {
+  {
+    "merchantOrigin": "{{merchantOrigin}}"
+  }
+}
+
+script:post-response {
+  test('Assertion Google Pay v1 signée (200)', function () { expect(res.getStatus()).to.equal(200); });
+  var b = res.getBody();
+  if (b && b.authJwt) {
+    console.log('merchantOrigin :', b.merchantOrigin);
+    console.log('authJwt (tronqué) :', String(b.authJwt).slice(0, 60) + '...');
+  } else {
+    console.log('Réponse gpay v1 :', JSON.stringify(b));
+  }
+}
+
+docs {
+  # Google Pay auth-JWT v1 — l'endpoint historique
+
+  `POST /api/public/v1/gpay/auth-jwt` — authentifié par le **SSO Septeo**.
+  Lance d'abord « Obtenir un jeton SSO (legacy Keycloak) ».
+
+  Il renvoie une assertion signée avec la **clé et le merchantId Google Pay de la
+  plateforme**, qui déclare que le domaine demandé est autorisé à encaisser sous notre
+  identité marchande. L'intégrateur la place ensuite dans `merchantInfo.authJwt` de sa
+  configuration Google Pay.
+
+  L'assertion ne porte **pas** de date d'expiration, et c'est voulu : la spec Google Pay
+  Platforms attend `merchantId`, `merchantOrigin` et `iat`, et la valeur est destinée à
+  être stockée une fois côté intégrateur.
+
+  ## Ce que cette requête sert à tester (#2748)
+
+  Depuis le correctif, la v1 applique le même contrôle que la v2 : on ne signe que pour un
+  domaine **enregistré par l'appelant**. L'identité étant ici une société, le service remonte
+  `Society.customer` puis `Customer.mainCustomer` pour retrouver le propriétaire du registre.
+
+  Deux cas à jouer :
+
+  - `merchantOrigin` enregistré par le main-customer de la société → **200**, assertion signée.
+  - `merchantOrigin` d'un autre client, ou jamais enregistré → **403**
+    `merchantOrigin not allowed for this caller`. Le message est volontairement identique
+    dans les deux cas de refus, pour ne pas offrir un moyen d'énumérer les domaines de la
+    plateforme.
+
+  Le domaine se récupère dans le back-office, page **Domaines à autoriser**. Un domaine
+  absent de cette page n'est de toute façon pas enregistré chez Adyen, donc Google Pay ne
+  fonctionnerait pas avec, 403 ou pas.
+}

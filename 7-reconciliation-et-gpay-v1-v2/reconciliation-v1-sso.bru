@@ -1,0 +1,64 @@
+meta {
+  name: Réconciliation v1 (SSO, dépréciée)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/public/v1/reconciliation?fromDate={{fromDate}}&untilDate={{untilDate}}
+  body: none
+  auth: bearer
+}
+
+params:query {
+  fromDate: {{fromDate}}
+  untilDate: {{untilDate}}
+}
+
+auth:bearer {
+  token: {{sso_access_token}}
+}
+
+script:pre-request {
+  // Fenêtre glissante des 7 derniers jours, pour que la requête marche sans rien saisir.
+  var now = new Date();
+  var from = new Date(now.getTime() - 7 * 24 * 3600 * 1000);
+  bru.setVar('fromDate', from.toISOString());
+  bru.setVar('untilDate', now.toISOString());
+}
+
+script:post-response {
+  test('Réconciliation v1 accessible (200)', function () { expect(res.getStatus()).to.equal(200); });
+  var b = res.getBody();
+  console.log('Réconciliation v1 :', b ? JSON.stringify(b).slice(0, 400) : '(vide)');
+}
+
+docs {
+  # Réconciliation v1 — l'endpoint historique
+
+  `GET /api/public/v1/reconciliation` — authentifié par le **SSO Septeo**, pas par Hydra.
+  Lance d'abord « Obtenir un jeton SSO (legacy Keycloak) ».
+
+  Aucun `publicSocietyId` en paramètre : la société est **déduite du jeton**. Le `client_id`
+  du jeton EST le `publicSocietyId`, et c'est lui qui filtre les données
+  (`PublicTransferController.java:49-52`). Un jeton de la société B ne peut donc rendre
+  que les données de la société B.
+
+  ## À quoi sert cette requête
+
+  Elle vérifie que la v1 **tourne toujours** pendant la coexistence des deux IdP (#2511).
+  Elle doit rester verte jusqu'au cutover. Le jour où elle tombe en 403 alors que le jeton
+  est frais, c'est que la règle SSO du `SecurityConfig` de billing-service a bougé.
+
+  ## Réponses attendues
+
+  - **200** : nominal.
+  - **401** : jeton absent, expiré, ou émis par le mauvais IdP (un jeton Hydra ici ne passe pas).
+  - **403** : le jeton est valide mais ne porte pas l'autorité `SERVICE_ACCOUNT`. C'est ce
+    qui arrive avec un jeton **utilisateur** du back-office : il passe la validation de la
+    gateway, qui ne vérifie que la signature et l'issuer, et c'est le service derrière qui
+    le refuse.
+  - **500** : le `client_id` du jeton n'est pas un UUID, donc pas un `publicSocietyId`.
+
+  Endpoint déprécié, à remplacer par la v2 ci-dessous.
+}

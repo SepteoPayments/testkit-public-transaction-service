@@ -1,0 +1,58 @@
+meta {
+  name: Réconciliation v2 (Hydra)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/api/public/v2/reconciliation?publicSocietyId={{publicSocietyId}}&fromDate={{fromDate}}&untilDate={{untilDate}}
+  body: none
+  auth: bearer
+}
+
+params:query {
+  publicSocietyId: {{publicSocietyId}}
+  fromDate: {{fromDate}}
+  untilDate: {{untilDate}}
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+script:pre-request {
+  // Même fenêtre que la v1, pour comparer les deux réponses sur la même période.
+  var now = new Date();
+  var from = new Date(now.getTime() - 7 * 24 * 3600 * 1000);
+  bru.setVar('fromDate', from.toISOString());
+  bru.setVar('untilDate', now.toISOString());
+}
+
+script:post-response {
+  test('Réconciliation v2 accessible (200)', function () { expect(res.getStatus()).to.equal(200); });
+  var b = res.getBody();
+  console.log('Réconciliation v2 :', b ? JSON.stringify(b).slice(0, 400) : '(vide)');
+}
+
+docs {
+  # Réconciliation v2 — la cible
+
+  `GET /api/public/v2/reconciliation` — authentifié par **ORY Hydra**, scope `payments:read`.
+  Lance d'abord « 0 · Authentification > Obtenir un jeton (5 min) ».
+
+  Même contrat de réponse que la v1, mais deux différences d'autorisation :
+
+  - la société est **explicite** dans l'URL (`publicSocietyId`), alors qu'elle était déduite
+    du jeton en v1 ;
+  - l'identité de l'appelant est un **main-customer**, pas une société. Le service vérifie
+    que le `publicSocietyId` demandé appartient bien au périmètre de l'appelant.
+
+  ## Le piège de cette requête
+
+  Le `publicSocietyId` doit appartenir au main-customer du client Hydra configuré dans
+  l'environnement. Si tu reprends celui de la requête v1 sans vérifier, tu peux tomber en
+  **403** alors que la v1 passe : ce n'est pas un bug, c'est le cloisonnement qui fonctionne.
+
+  Pour comparer proprement les deux versions, prends une société couverte par les deux
+  identités, sinon compare seulement les codes de retour et pas les contenus.
+}
