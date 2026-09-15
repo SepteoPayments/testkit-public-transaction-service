@@ -4,6 +4,9 @@ script:pre-request {
   // reference reutilise la MEME cle, comme un vrai PMS => l'API renvoie le resultat
   // d'origine au lieu de creer un doublon. Nouveau paiement = nouvelle reference.
   // Pas de reference (GET, token) => UUID aleatoire, sans importance.
+  // EXCEPTION /sessions : une session est ephemere (~1h). Deriver la cle d'une reference FIXE
+  // rejouerait indefiniment la 1ere session creee (=> session expiree, Drop-in vide). Donc pour
+  // /sessions on force une cle FRAICHE a chaque envoi. Les operations d'argent gardent la cle derivee.
   // SANS crypto : marche en Safe Mode (QuickJS) ET en Developer Mode.
   function uuid() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -17,5 +20,8 @@ script:pre-request {
     if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = null; } }
     if (body && body.reference) ref = String(body.reference);
   } catch (e) { ref = null; }
-  bru.setVar('idemKey', ref ? ('idem-' + ref) : uuid());
+  var url = '';
+  try { url = String((req.getUrl && req.getUrl()) || ''); } catch (e) { url = ''; }
+  var isSession = url.indexOf('/sessions') !== -1;
+  bru.setVar('idemKey', (ref && !isSession) ? ('idem-' + ref) : uuid());
 }
