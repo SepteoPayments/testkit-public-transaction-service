@@ -1,16 +1,19 @@
 meta {
-  name: Obtenir un jeton (5 min)
+  name: Obtenir un jeton (15 min)
   type: http
   seq: 1
 }
+
 post {
   url: {{token_url}}
   body: formUrlEncoded
   auth: none
 }
+
 headers {
   Content-Type: application/x-www-form-urlencoded
 }
+
 body:form-urlencoded {
   grant_type: client_credentials
   client_assertion_type: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
@@ -18,6 +21,7 @@ body:form-urlencoded {
   scope: {{scopes}}
   audience: {{token_audience}}
 }
+
 script:pre-request {
   // Signe l'assertion private_key_jwt avec le crypto natif de Node (Developer Mode requis).
   // La cle privee reste hors git : elle vient de .env (PRIVATE_KEY_PEM).
@@ -42,6 +46,7 @@ script:pre-request {
   const signature = crypto.createSign('RSA-SHA256').update(signingInput).sign(pem).toString('base64url');
   bru.setVar('client_assertion', signingInput + '.' + signature);
 }
+
 script:post-response {
   test('Jeton obtenu (200)', function () { expect(res.getStatus()).to.equal(200); });
   var b = res.getBody();
