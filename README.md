@@ -25,7 +25,7 @@ Versionnée dans git : chaque requête = un fichier `.bru` lisible et diffable e
    `sso_client_id`. Sans ce secret, seuls les endpoints v2 (Hydra) sont jouables.
 3. **Developer Mode** : dans Bruno, *Collection settings → Safe Mode → Developer Mode*.
    C'est nécessaire pour que le script du jeton puisse signer avec `crypto` de Node.
-4. Choisir l'environnement **Sandbox-Marc-Spa** (ou **Qualification-Marc-Spa**, **Test-Marc-Spa**) dans le menu en haut à droite.
+4. Choisir l'environnement **Sandbox-Marc-Spa** (ou **Qualification-Marc-Spa**, **Test**) dans le menu en haut à droite.
 5. Lancer **`0 · Authentification / Obtenir un jeton`** → le token est signé et stocké tout seul.
 6. Lancer n'importe quelle requête : elle réutilise le token automatiquement.
 
@@ -60,10 +60,12 @@ La **même clé privée** sert sur tous les environnements. Ce qui change, c'est
 
 ## Variables
 
-- **Environnement** (`environments/Sandbox-Marc-Spa.bru`, `Qualification-Marc-Spa.bru`, `Test-Marc-Spa.bru`, versionnés) :
-  `base_url`, `token_url`, `aud`, `token_audience`, `client_id`, `kid`, `publicStoreId`, `shopperReference`,
-  `amount_value`, `currency`, `consentMode`… Le client de test **Marc Resort Group 2** existe sur les deux
-  environnements avec la même clé (bases copiées depuis la sandbox).
+- **Environnement** (`environments/Sandbox-Marc-Spa.bru`, `Qualification-Marc-Spa.bru`, `Test.bru`, versionnés) :
+  `base_url`, `token_url`, `aud`, `token_audience`, `private_key_var`, `client_id`, `kid`, `publicStoreId`,
+  `shopperReference`, `amount_value`, `currency`, `consentMode`… Sandbox et Qualification partagent le client
+  **Marc Resort Group 2** et sa clé (`PRIVATE_KEY_PEM`, bases copiées depuis la sandbox) ; **Test** a son propre
+  client de test et sa propre clé (`PRIVATE_KEY_PEM_TEST`). `private_key_var` dit au script du jeton quelle
+  variable du `.env` signer avec.
 - **Runtime** (posées par les scripts au fil des appels) : `access_token`, `client_assertion`,
   `paymentLinkId`, `clientSession`, `deviceId`, `serviceId`. `pspReference` se colle à la main
   (récupéré du webhook d'autorisation) pour les opérations sur un paiement carte.

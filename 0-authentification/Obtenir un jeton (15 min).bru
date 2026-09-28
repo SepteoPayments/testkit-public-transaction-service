@@ -33,11 +33,14 @@ script:pre-request {
   const clientId = bru.getEnvVar('client_id');
   const kid = bru.getEnvVar('kid');
   const aud = bru.getEnvVar('aud');
-  let pem = bru.getProcessEnv('PRIVATE_KEY_PEM') || bru.getEnvVar('private_key_pem') || '';
+  // Une cle privee par client : l'environnement nomme la variable du .env a utiliser
+  // (private_key_var, ex. PRIVATE_KEY_PEM pour Sandbox/Qualification, PRIVATE_KEY_PEM_TEST pour Test).
+  const keyVar = bru.getEnvVar('private_key_var') || 'PRIVATE_KEY_PEM';
+  let pem = bru.getProcessEnv(keyVar) || bru.getEnvVar('private_key_pem') || '';
   if (pem.indexOf('\\n') >= 0) pem = pem.replace(/\\n/g, '\n');
   if (!clientId) throw new Error('client_id manquant (environnement).');
   if (!kid) throw new Error('kid manquant (environnement).');
-  if (!pem || pem.indexOf('BEGIN') < 0) throw new Error('Cle privee absente : mets PRIVATE_KEY_PEM dans .env');
+  if (!pem || pem.indexOf('BEGIN') < 0) throw new Error('Cle privee absente : mets ' + keyVar + ' dans .env');
   const b64url = (o) => Buffer.from(typeof o === 'string' ? o : JSON.stringify(o)).toString('base64url');
   const now = Math.floor(Date.now() / 1000);
   const header = { alg: 'RS256', typ: 'JWT', kid: kid };
