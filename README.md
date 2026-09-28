@@ -25,7 +25,7 @@ Versionnée dans git : chaque requête = un fichier `.bru` lisible et diffable e
    `sso_client_id`. Sans ce secret, seuls les endpoints v2 (Hydra) sont jouables.
 3. **Developer Mode** : dans Bruno, *Collection settings → Safe Mode → Developer Mode*.
    C'est nécessaire pour que le script du jeton puisse signer avec `crypto` de Node.
-4. Choisir l'environnement **Sandbox-Marc-Spa** (ou **Test-Marc-Spa**) dans le menu en haut à droite.
+4. Choisir l'environnement **Sandbox-Marc-Spa** (ou **Qualification-Marc-Spa**, **Test-Marc-Spa**) dans le menu en haut à droite.
 5. Lancer **`0 · Authentification / Obtenir un jeton`** → le token est signé et stocké tout seul.
 6. Lancer n'importe quelle requête : elle réutilise le token automatiquement.
 
@@ -54,12 +54,13 @@ La **même clé privée** sert sur tous les environnements. Ce qui change, c'est
   Un jeton obtenu pour un environnement n'est jamais accepté par un autre.
 - Tant que #2965 n'est **pas déployé** sur un environnement, celui-ci attend encore les anciennes valeurs
   (`aud` = `https://oauth.api.septeo-payments.fr/oauth2/token`, `audience` = `septeo-payments-public-api`).
-  C'est le cas de l'environnement **Test** au 2026-09-28 : son fichier garde les anciennes valeurs, à
-  basculer sur la ligne « test » du tableau le jour du déploiement.
+  Au 2026-09-28 : **Sandbox** déployé (nouvelles valeurs) ; **Qualification** préparé avec les nouvelles
+  valeurs, utilisable dès le déploiement de #2965 sur qualif ; **Test** garde les anciennes valeurs, à
+  basculer sur la ligne « test » du tableau le jour de son déploiement.
 
 ## Variables
 
-- **Environnement** (`environments/Sandbox-Marc-Spa.bru` et `environments/Test-Marc-Spa.bru`, versionnés) :
+- **Environnement** (`environments/Sandbox-Marc-Spa.bru`, `Qualification-Marc-Spa.bru`, `Test-Marc-Spa.bru`, versionnés) :
   `base_url`, `token_url`, `aud`, `token_audience`, `client_id`, `kid`, `publicStoreId`, `shopperReference`,
   `amount_value`, `currency`, `consentMode`… Le client de test **Marc Resort Group 2** existe sur les deux
   environnements avec la même clé (bases copiées depuis la sandbox).
