@@ -46,8 +46,8 @@ La **même clé privée** sert sur tous les environnements. Ce qui change, c'est
 |---------------|--------------------------------------------------------------------|----------------------------------------------|
 | sandbox       | `https://septeo-payments-public-api-sandbox.septeo.fr/oauth2/token` | `septeo-payments-sandbox-public-api`         |
 | qualification | `https://septeo-payments-public-api-qualification.septeo.fr/oauth2/token` | `septeo-payments-qualification-public-api` |
-| test (pprod)  | `https://septeo-payments-public-api-pprod.septeo.fr/oauth2/token`   | `septeo-payments-testing-public-api`         |
-| production    | `https://septeo-payments-public-api.septeo.fr/oauth2/token`         | `septeo-payments-public-api`                 |
+| test (pprod)  | `https://septeo-payments-public-api-test.septeo.fr/oauth2/token`    | `septeo-payments-testing-public-api`         |
+| production    | `https://septeo-payments-public-api-production.septeo.fr/oauth2/token` | `septeo-payments-public-api`              |
 
 - `aud` doit valoir exactement le point de jeton de l'environnement : Hydra refuse l'assertion sinon.
 - `audience` est obligatoire : sans lui le jeton n'a pas de claim `aud` et l'API le refuse (401).
@@ -62,7 +62,7 @@ La **même clé privée** sert sur tous les environnements. Ce qui change, c'est
 - **Environnement** (`environments/Sandbox-Marc-Spa.bru` et `environments/Test-Marc-Spa.bru`, versionnés) :
   `base_url`, `token_url`, `aud`, `token_audience`, `client_id`, `kid`, `publicStoreId`, `shopperReference`,
   `amount_value`, `currency`, `consentMode`… Le client de test **Marc Resort Group 2** existe sur les deux
-  environnements avec la même clé (bases copiées depuis la sandbox) ; `base_url` de Test à confirmer.
+  environnements avec la même clé (bases copiées depuis la sandbox).
 - **Runtime** (posées par les scripts au fil des appels) : `access_token`, `client_assertion`,
   `paymentLinkId`, `clientSession`, `deviceId`, `serviceId`. `pspReference` se colle à la main
   (récupéré du webhook d'autorisation) pour les opérations sur un paiement carte.
