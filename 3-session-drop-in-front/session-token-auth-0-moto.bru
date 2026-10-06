@@ -22,13 +22,14 @@ body:json {
     "publicStoreId": "{{publicStoreId}}",
     "returnUrl": "https://exemple.fr/retour",
     "shopperCountryCode": "FR",
-    "capture": { "mode": "IMMEDIATE" },
+    "capture": { "mode": "MANUAL" },
     "tokenization": { "shopperReference": "{{shopperReference}}", "recurringModel": "UNSCHEDULED", "consentMode": "{{consentMode}}" },
     "moto": true,
     "preAuth": false
   }
 }
 docs {
+  MOTO = tokenisation only (#3049) : l'API exige amount=0, capture MANUAL et une tokenisation.
   Auth à 0 + tokenisation, saisie par un agent (MOTO). Rien n'est débité : ça valide et
   ENREGISTRE le moyen de paiement pour des débits futurs à l'initiative du marchand.
   Ensuite : le token arrive dans le webhook AUTHORISATION (storedPaymentMethodId), puis on

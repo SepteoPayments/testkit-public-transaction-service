@@ -1,5 +1,5 @@
 meta {
-  name: Session — MOTO (agent téléphone/courrier)
+  name: Session — MOTO invalide (refus 422)
   type: http
   seq: 6
 }
@@ -18,7 +18,7 @@ auth:bearer {
 body:json {
   {
     "amount": { "value": {{amount_value}}, "currency": "{{currency}}" },
-    "reference": "test-session-moto",
+    "reference": "test-session-moto-invalide",
     "publicStoreId": "{{publicStoreId}}",
     "returnUrl": "https://exemple.fr/retour",
     "shopperCountryCode": "FR",
@@ -28,13 +28,16 @@ body:json {
     "preAuth": false
   }
 }
+docs {
+  Cas négatif #3049. MOTO = tokenisation d'une carte uniquement : un MOTO ne doit jamais être
+  capturable. L'API refuse donc toute session MOTO qui n'est pas une autorisation à 0, en capture
+  MANUAL, avec une instruction de tokenisation. Ici amount non nul + capture IMMEDIATE + sans
+  tokenisation → refus 422 MOTO_NOT_CAPTURABLE. Pour un MOTO valide, voir « Token via auth à 0 (MOTO) ».
+}
 script:post-response {
-  test('200 CREATED', function () { expect(res.getStatus()).to.equal(200); });
-  var b = res.getBody();
-  if (b && b.clientSession) {
-    bru.setVar('clientSession', b.clientSession);
-    if (b.publicSessionId) bru.setVar('publicSessionId', b.publicSessionId);
-    console.log('--- clientSession (colle-le dans dropin-test.html) ---');
-    console.log(b.clientSession);
-  } else { console.log('Pas de clientSession :', JSON.stringify(b)); }
+  test('422 refusé', function () { expect(res.getStatus()).to.equal(422); });
+  test('code MOTO_NOT_CAPTURABLE', function () {
+    var b = res.getBody();
+    expect(b && b.code).to.equal('MOTO_NOT_CAPTURABLE');
+  });
 }
