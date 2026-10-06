@@ -18,7 +18,8 @@ auth:bearer {
 body:json {
   {
     "amount": { "value": {{amount_value}}, "currency": "{{currency}}" },
-    "publicStoreId": "{{publicStoreId}}"
+    "publicStoreId": "{{publicStoreId}}",
+    "reference": "cap-{{idemKey}}"
   }
 }
 script:post-response {

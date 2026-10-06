@@ -1,0 +1,41 @@
+meta {
+  name: Créer un lien enrichi (#3043)
+  type: http
+  seq: 4
+}
+post {
+  url: {{base_url}}/api/public/v1/payment-links
+  body: json
+  auth: bearer
+}
+headers {
+  Content-Type: application/json
+  Idempotency-Key: {{idemKey}}
+}
+auth:bearer {
+  token: {{access_token}}
+}
+body:json {
+  {
+    "amount": { "value": {{amount_value}}, "currency": "{{currency}}" },
+    "reference": "lien-enrichi-{{idemKey}}",
+    "returnUrl": "https://exemple.fr/retour",
+    "publicStoreId": "{{publicStoreId}}",
+    "countryCode": "FR",
+    "shopperName": { "firstName": "Marc", "lastName": "Dupont" },
+    "telephoneNumber": "+33612345678",
+    "shopperLocale": "fr-FR",
+    "deliveryAddress": { "street": "10 rue du Fnu", "houseNumberOrName": "10", "city": "Nice", "postalCode": "06000", "country": "FR" }
+  }
+}
+docs {
+  Lien de paiement enrichi (#3043, lot 2) : enrichissement RÉDUIT applicable à un lien —
+  shopperName, telephoneNumber, shopperLocale, deliveryAddress. L'IP et les données 3DS2
+  (accountInfo / merchantRiskIndicator) ne sont PAS passées ici : Adyen les capte sur sa page
+  hébergée au moment du paiement.
+}
+script:post-response {
+  test('201 CREATED', function () { expect(res.getStatus()).to.equal(201); });
+  var b = res.getBody();
+  if (b && b.id) { bru.setVar('paymentLinkId', b.id); console.log('lien:', b.url); }
+}

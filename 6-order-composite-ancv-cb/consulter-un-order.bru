@@ -1,0 +1,22 @@
+meta {
+  name: Consulter un order (ANCV + CB)
+  type: http
+  seq: 2
+}
+get {
+  url: {{base_url}}/api/public/v1/orders/{{orderPspReference}}?publicStoreId={{publicStoreId}}
+  body: none
+  auth: bearer
+}
+auth:bearer {
+  token: {{access_token}}
+}
+docs {
+  Réconciliation d'un order composite (#3043) : renvoie les jambes (pspReference + moyen de paiement).
+  L'orderPspReference vient du webhook ORDER_CLOSED (colle-le dans l'env). Le PMS peut ensuite
+  consulter chaque jambe via GET /payments/{pspReference}. Cloisonné : 404 si l'order n'est pas au store.
+}
+script:post-response {
+  test('200 OK', function () { expect(res.getStatus()).to.equal(200); });
+  try { var b = res.getBody(); if (b && b.legs) console.log('jambes:', JSON.stringify(b.legs)); } catch (e) {}
+}
